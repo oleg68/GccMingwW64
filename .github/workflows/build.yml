@@ -1,0 +1,38 @@
+name: Build
+
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-24
+    steps:
+    - uses: actions/checkout@v4.1.1
+    
+    - name: Install Dependencies
+      run: ${{github.workspace}}/build-scripts/for-linux/prepare-ubuntu.bash
+      
+    - name: Build
+      working-directory: ${{github.workspace}}
+      run: ${{github.workspace}}/build-scripts/for-linux/build-on-ubuntu.bash
+
+    - name: Upload result
+      uses: nanoufo/action-upload-artifacts-and-release-assets@v2
+      with:
+        path: |
+          ${{github.workspace}}/build/ubuntu/*.deb
+        upload-release-files: ${{ needs.calc_ver.outputs.release_flag }}
+        release-upload-url: ${{ needs.calc_ver.outputs.release_upload_url }}
+        if-no-files-found: error
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+#  release:
+#    needs: [calc_ver, build]
+#    if: ${{ needs.calc_ver.outputs.release_flag == 'ON' }}
+#    runs-on: ubuntu-latest
+#    steps:
+#      
+#    - uses: eregon/publish-release@v1
+#      env:
+#        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#      with:
+#        release_id: ${{ needs.calc_ver.outputs.release_id }}
